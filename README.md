@@ -1,1 +1,3 @@
-# adeilh.github.io
+# Notes on different Things 
+
+## [C](C/memory.md)
