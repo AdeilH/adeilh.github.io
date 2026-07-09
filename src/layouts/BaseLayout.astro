@@ -1,0 +1,118 @@
+---
+import '../styles/global.css';
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+
+interface Props {
+  title: string;
+  description?: string;
+  /** Hide the default page title heading (post layout draws its own). */
+  showHeader?: boolean;
+}
+
+const {
+  title,
+  description = 'A small, fast and private blog.',
+  showHeader = true,
+} = Astro.props;
+
+const fullTitle = title;
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content={description} />
+    <meta name="generator" content={Astro.generator} />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link
+      rel="alternate"
+      type="application/rss+xml"
+      title="RSS"
+      href={new URL('rss.xml', Astro.site)}
+    />
+    <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#0e1116" media="(prefers-color-scheme: dark)" />
+
+    <!-- Read saved theme before paint to avoid a flash. No external calls. -->
+    <script is:inline>
+      (function () {
+        try {
+          var t = localStorage.getItem('theme');
+          if (!t) t = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+          document.documentElement.setAttribute('data-theme', t);
+        } catch (e) {}
+      })();
+    </script>
+
+    <!--
+      Content-Security-Policy as a meta tag so it works on ANY static host
+      (GitHub Pages, etc.) without server config. The full policy (including
+      frame-ancestors) is also set via HTTP headers in `astro.config.mjs`
+      (preview) and `public/_headers` (Netlify).
+      The only inline script is the tiny theme reader below; everything else
+      is bundled as a same-origin module.
+    -->
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; img-src 'self' data:; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; style-src-attr 'self' 'unsafe-inline'; object-src 'none'; base-uri 'self'"
+    />
+
+    <title>{fullTitle}</title>
+  </head>
+  <body>
+    <Header />
+    <main class="container" id="main">
+      <slot />
+    </main>
+    <Footer />
+
+    <script>
+      // Beautify code blocks: wrap each Shiki <pre> with a header bar
+      // showing the language and a copy-to-clipboard button.
+      function enhanceCodeBlocks() {
+        const blocks = document.querySelectorAll<HTMLPreElement>('pre.astro-code');
+        blocks.forEach((pre) => {
+          if (pre.parentElement?.classList.contains('code-block')) return;
+
+          const lang = pre.getAttribute('data-language') || 'code';
+          const code = pre.querySelector('code');
+          const text = code ? code.innerText : pre.innerText;
+
+          const wrap = document.createElement('div');
+          wrap.className = 'code-block';
+
+          const head = document.createElement('div');
+          head.className = 'code-block__head';
+
+          const label = document.createElement('span');
+          label.className = 'code-block__lang';
+          label.textContent = lang;
+
+          const copy = document.createElement('button');
+          copy.className = 'code-block__copy';
+          copy.type = 'button';
+          copy.textContent = 'Copy';
+          copy.addEventListener('click', async () => {
+            try {
+              await navigator.clipboard.writeText(text);
+              copy.textContent = 'Copied';
+              window.setTimeout(() => (copy.textContent = 'Copy'), 1500);
+            } catch {
+              copy.textContent = 'Failed';
+              window.setTimeout(() => (copy.textContent = 'Copy'), 1500);
+            }
+          });
+
+          head.append(label, copy);
+          pre.replaceWith(wrap);
+          wrap.append(head, pre);
+        });
+      }
+
+      enhanceCodeBlocks();
+    </script>
+  </body>
+</html>

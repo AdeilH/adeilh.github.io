@@ -1,0 +1,44 @@
+---
+import BaseLayout from './BaseLayout.astro';
+import ListenButton from '../components/ListenButton.astro';
+import FormattedDate from '../components/FormattedDate.astro';
+import type { CollectionEntry } from 'astro:content';
+
+interface Props {
+  post: CollectionEntry<'posts'>;
+}
+
+const { post } = Astro.props;
+const { title, description, pubDate, updatedDate, tags, audio } = post.data;
+---
+
+<BaseLayout title={title} description={description}>
+  <article>
+    <header>
+      <h1>{title}</h1>
+      <p class="muted">
+        <FormattedDate date={pubDate} />
+        {updatedDate && <> &middot; updated <FormattedDate date={updatedDate} /></>}
+      </p>
+      {audio && <ListenButton target="article-body" label="Listen to this post" />}
+    </header>
+
+    <div id="article-body">
+      <slot />
+    </div>
+
+    {
+      tags.length > 0 && (
+        <p class="muted" style="margin-top:2.5rem">
+          Tagged:
+          {tags.map((tag) => (
+            <a href={`/?tag=${encodeURIComponent(tag)}`}>#{tag}</a>
+          )).reduce((acc, cur, i) => (i === 0 ? [cur] : [...acc, ', ', cur]), [])}
+        </p>
+      )
+    }
+
+    <hr />
+    <p><a href="/">&larr; Back to all posts</a></p>
+  </article>
+</BaseLayout>

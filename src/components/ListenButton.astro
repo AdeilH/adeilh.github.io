@@ -1,0 +1,264 @@
+---
+interface Props {
+  target: string;
+  label?: string;
+}
+const { target, label = 'Listen' } = Astro.props;
+---
+
+<div class="listen" data-listen-root data-target={target}>
+  <button class="btn listen__play" data-listen aria-pressed="false">
+    <span class="listen__icon" aria-hidden="true">▶</span>
+    <span class="listen__text">{label}</span>
+  </button>
+  <div class="listen__controls" data-controls hidden>
+    <button class="btn listen__mini" data-pause aria-label="Pause">❚❚</button>
+    <button class="btn listen__mini" data-stop aria-label="Stop">■</button>
+    <div class="listen__progress" data-progress aria-hidden="true">
+      <div class="listen__bar" data-bar></div>
+    </div>
+  </div>
+  <select class="listen__voice" data-voice aria-label="Voice" hidden></select>
+  <span class="listen__status muted" data-status aria-live="polite"></span>
+</div>
+
+<script>
+  type Root = HTMLElement;
+
+  // Only one utterance at a time across the whole page.
+  let activeRoot: Root | null = null;
+
+  // --- Voice selection ---------------------------------------------------
+  const synth = window.speechSynthesis;
+  let voices: SpeechSynthesisVoice[] = [];
+  // Track the chosen voice by its stable id, not the object — browsers can
+  // replace voice objects on every getVoices() call, and a stale reference is
+  // silently ignored (the engine falls back to the default voice).
+  let selectedVoiceURI: string | null = null;
+
+  // Prefer a high-quality natural/neural English voice when available.
+  function pickVoice(list: SpeechSynthesisVoice[]): SpeechSynthesisVoice | null {
+    const en = list.filter((v) => (v.lang || '').toLowerCase().startsWith('en'));
+    const pool = en.length ? en : list;
+    return (
+      pool.find((v) => /natural/i.test(v.name)) ||
+      pool.find((v) => /google/i.test(v.name)) ||
+      pool.find((v) => /microsoft/i.test(v.name) && /neural|online/i.test(v.name)) ||
+      pool.find((v) => /microsoft/i.test(v.name)) ||
+      pool[0] ||
+      null
+    );
+  }
+
+  function populate(select: HTMLSelectElement) {
+    select.innerHTML = '';
+    const en = voices.filter((v) => (v.lang || '').toLowerCase().startsWith('en'));
+    const pool = en.length ? en : voices;
+    if (!pool.length) {
+      select.hidden = true;
+      return;
+    }
+    pool.forEach((v) => {
+      const o = document.createElement('option');
+      o.value = v.voiceURI;
+      o.textContent = `${v.name} · ${v.lang}`;
+      if (selectedVoiceURI && v.voiceURI === selectedVoiceURI) o.selected = true;
+      select.append(o);
+    });
+    select.hidden = pool.length <= 1;
+  }
+
+  function refreshVoices() {
+    voices = synth.getVoices();
+    if (voices.length && !selectedVoiceURI) {
+      const best = pickVoice(voices);
+      if (best) selectedVoiceURI = best.voiceURI;
+    }
+    document
+      .querySelectorAll<HTMLSelectElement>('[data-listen-root] select[data-voice]')
+      .forEach(populate);
+  }
+
+  if (synth.onvoiceschanged === null) synth.onvoiceschanged = refreshVoices;
+  refreshVoices();
+  // Some browsers have voices available immediately.
+  if (!voices.length) refreshVoices();
+
+  // --- Per-button setup --------------------------------------------------
+  function getText(root: Root): string {
+    const id = root.getAttribute('data-target');
+    const el = id ? document.getElementById(id) : null;
+    return el ? (el.innerText || '').trim() : '';
+  }
+
+  function reset(root: Root) {
+    const play = root.querySelector<HTMLButtonElement>('[data-listen]');
+    const controls = root.querySelector<HTMLElement>('[data-controls]');
+    const status = root.querySelector<HTMLElement>('[data-status]');
+    const icon = root.querySelector<HTMLElement>('.listen__icon');
+    const text = root.querySelector<HTMLElement>('.listen__text');
+    if (play) play.setAttribute('aria-pressed', 'false');
+    if (controls) controls.hidden = true;
+    if (status) status.textContent = '';
+    if (icon) icon.textContent = '▶';
+    if (text) text.textContent = root.dataset.label || 'Listen';
+  }
+
+  function stopAll(except?: Root | null) {
+    synth.cancel();
+    if (activeRoot && activeRoot !== except) reset(activeRoot);
+    activeRoot = except || null;
+  }
+
+  function setup(root: Root) {
+    const play = root.querySelector<HTMLButtonElement>('[data-listen]');
+    const pause = root.querySelector<HTMLButtonElement>('[data-pause]');
+    const stop = root.querySelector<HTMLButtonElement>('[data-stop]');
+    const controls = root.querySelector<HTMLElement>('[data-controls]');
+    const status = root.querySelector<HTMLElement>('[data-status]');
+    const bar = root.querySelector<HTMLElement>('[data-bar]');
+    const icon = root.querySelector<HTMLElement>('.listen__icon');
+    const text = root.querySelector<HTMLElement>('.listen__text');
+    const voiceSelect = root.querySelector<HTMLSelectElement>('[data-voice]');
+    root.dataset.label = text?.textContent || 'Listen';
+
+    populate(voiceSelect as HTMLSelectElement);
+
+    if (!('speechSynthesis' in window)) {
+      if (play) {
+        play.disabled = true;
+        play.title = 'Text-to-speech is not supported in this browser';
+      }
+      if (status) status.textContent = 'Audio not supported in this browser.';
+      return;
+    }
+
+    let u: SpeechSynthesisUtterance | null = null;
+    let total = 0;
+
+    function playIt() {
+      const content = getText(root);
+      if (!content) {
+        if (status) status.textContent = 'Nothing to read.';
+        return;
+      }
+      stopAll(root);
+      u = new SpeechSynthesisUtterance(content);
+      u.rate = 1;
+      u.pitch = 1;
+      const chosen = selectedVoiceURI
+        ? voices.find((v) => v.voiceURI === selectedVoiceURI)
+        : null;
+      if (chosen) u.voice = chosen;
+      total = content.length;
+      u.onboundary = (e: SpeechSynthesisEvent) => {
+        if (bar && total) bar.style.width = `${Math.min(100, (e.charIndex / total) * 100)}%`;
+      };
+      u.onend = () => {
+        if (bar) bar.style.width = '0%';
+        reset(root);
+        if (activeRoot === root) activeRoot = null;
+      };
+      u.onerror = () => {
+        if (status) status.textContent = 'Playback stopped.';
+        reset(root);
+        if (activeRoot === root) activeRoot = null;
+      };
+      synth.speak(u);
+      activeRoot = root;
+      if (play) play.setAttribute('aria-pressed', 'true');
+      if (controls) controls.hidden = false;
+      if (icon) icon.textContent = '❚❚';
+      if (text) text.textContent = 'Pause';
+      if (status) status.textContent = 'Playing…';
+    }
+
+    play?.addEventListener('click', () => {
+      if (activeRoot === root && synth.speaking && !synth.paused) {
+        synth.pause();
+        if (icon) icon.textContent = '▶';
+        if (text) text.textContent = 'Resume';
+        if (status) status.textContent = 'Paused';
+        return;
+      }
+      if (activeRoot === root && synth.paused) {
+        synth.resume();
+        if (icon) icon.textContent = '❚❚';
+        if (text) text.textContent = 'Pause';
+        if (status) status.textContent = 'Playing…';
+        return;
+      }
+      playIt();
+    });
+
+    pause?.addEventListener('click', () => {
+      if (synth.speaking && !synth.paused) synth.pause();
+      else if (synth.paused) synth.resume();
+    });
+
+    stop?.addEventListener('click', () => {
+      stopAll(null);
+      if (bar) bar.style.width = '0%';
+      reset(root);
+    });
+
+    voiceSelect?.addEventListener('change', () => {
+      selectedVoiceURI = voiceSelect.value;
+      // Re-read immediately with the new voice if this post is playing.
+      if (activeRoot === root && (synth.speaking || synth.paused)) {
+        stopAll(null);
+        if (bar) bar.style.width = '0%';
+        reset(root);
+        // Small delay avoids the engine dropping the new utterance right after
+        // cancel() (a known Chrome quirk).
+        window.setTimeout(playIt, 80);
+      }
+    });
+  }
+
+  document.querySelectorAll<Root>('[data-listen-root]').forEach(setup);
+</script>
+
+<style>
+  .listen {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.6rem;
+    margin: 1rem 0 0.5rem;
+  }
+  .listen__controls {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    flex: 1;
+    min-width: 160px;
+  }
+  .listen__mini { padding: 0.35em 0.55em; font-size: 0.85rem; line-height: 1; }
+  .listen__progress {
+    flex: 1;
+    height: 6px;
+    background: var(--border);
+    border-radius: 999px;
+    overflow: hidden;
+  }
+  .listen__bar {
+    height: 100%;
+    width: 0%;
+    background: var(--accent);
+    transition: width 0.15s linear;
+  }
+  .listen__status { font-size: 0.85rem; }
+  .listen__icon { font-size: 0.8em; }
+  .listen__voice {
+    font: inherit;
+    font-size: 0.85rem;
+    color: var(--text);
+    background: var(--bg-soft);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 0.35em 0.5em;
+    max-width: 14rem;
+  }
+  .listen__voice:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+</style>

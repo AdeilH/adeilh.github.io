@@ -1,0 +1,124 @@
+---
+import { getCollection } from 'astro:content';
+import BaseLayout from '../layouts/BaseLayout.astro';
+import PostCard from '../components/PostCard.astro';
+
+const posts = (await getCollection('posts', ({ data }) => !data.draft)).sort(
+  (a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf()
+);
+
+// Collect all tags for the filter UI.
+const tagSet = new Set<string>();
+posts.forEach((p) => p.data.tags.forEach((t) => tagSet.add(t)));
+const tags = [...tagSet].sort();
+---
+
+<BaseLayout title="Blog" description="Posts from Adeel.">
+  <h1>Blog</h1>
+  <p class="intro">
+    Hi, I am a software developer with experience working in systems programming
+    languages like C++, Rust and Go. My aim with this blog is to document what I
+    am working on and what I am building.
+  </p>
+
+  <div class="blog-tools">
+    <input
+      type="search"
+      id="search"
+      class="search"
+      placeholder="Search posts…"
+      aria-label="Search posts"
+      autocomplete="off"
+    />
+    <div class="tagfilter" id="tagfilter" aria-label="Filter by tag">
+      <button class="tagbtn is-active" data-tag="">All</button>
+      {tags.map((t) => <button class="tagbtn" data-tag={t}>#{t}</button>)}
+    </div>
+  </div>
+
+  <div id="list">
+    {posts.map((post) => <PostCard post={post} />)}
+  </div>
+  <p id="empty" class="muted" hidden>No posts match your search.</p>
+</BaseLayout>
+
+<script>
+  const search = document.getElementById('search') as HTMLInputElement | null;
+  const tagfilter = document.getElementById('tagfilter');
+  const cards = Array.from(document.querySelectorAll<HTMLElement>('.card'));
+  const empty = document.getElementById('empty');
+  let activeTag = '';
+
+  function apply() {
+    const q = (search?.value || '').toLowerCase().trim();
+    let visible = 0;
+    cards.forEach((card) => {
+      const hay = `${card.dataset.title || ''} ${card.dataset.tags || ''}`;
+      const matchesText = !q || hay.includes(q);
+      const matchesTag = !activeTag || (card.dataset.tags || '').includes(activeTag);
+      const show = matchesText && matchesTag;
+      card.hidden = !show;
+      if (show) visible++;
+    });
+    if (empty) empty.hidden = visible !== 0;
+  }
+
+  search?.addEventListener('input', apply);
+  tagfilter?.querySelectorAll<HTMLButtonElement>('.tagbtn').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      tagfilter!.querySelectorAll('.tagbtn').forEach((b) => b.classList.remove('is-active'));
+      btn.classList.add('is-active');
+      activeTag = btn.dataset.tag || '';
+      apply();
+    });
+  });
+
+  // Honour ?tag=... coming from tag links elsewhere on the site.
+  const initial = new URLSearchParams(location.search).get('tag');
+  if (initial) {
+    const match = tagfilter?.querySelector<HTMLButtonElement>(`.tagbtn[data-tag="${CSS.escape(initial)}"]`);
+    if (match) match.click();
+  }
+</script>
+
+<style>
+  .blog-tools {
+    display: flex;
+    flex-direction: column;
+    gap: 0.8rem;
+    margin: 1.2rem 0 1.5rem;
+  }
+  .search {
+    width: 100%;
+    padding: 0.6em 0.8em;
+    font: inherit;
+    color: var(--text);
+    background: var(--bg-soft);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+  }
+  .search:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+  .tagfilter { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+  .tagbtn {
+    border: 1px solid var(--border);
+    background: var(--bg-soft);
+    color: var(--text-soft);
+    border-radius: 999px;
+    padding: 0.25em 0.7em;
+    font: inherit;
+    font-size: 0.85rem;
+    cursor: pointer;
+  }
+  .tagbtn:hover { border-color: var(--accent); }
+  .tagbtn.is-active {
+    border-color: var(--accent);
+    color: var(--accent);
+    font-weight: 600;
+  }
+  .tagbtn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .intro {
+    color: var(--text-soft);
+    font-size: 1.05rem;
+    margin: 0.4rem 0 1.6rem;
+  }
+</style>

@@ -1,0 +1,54 @@
+---
+import FormattedDate from './FormattedDate.astro';
+import type { CollectionEntry } from 'astro:content';
+
+interface Props {
+  post: CollectionEntry<'posts'>;
+}
+const { post } = Astro.props;
+const { title, description, pubDate, tags } = post.data;
+// Derive a short plain-text excerpt (no markdown) for cards.
+const excerpt =
+  description ||
+  post.body
+    .replace(/[#>*_`~\-]/g, '')
+    .replace(/\[(.*?)\]\(.*?\)/g, '$1')
+    .slice(0, 160)
+    .trim() + '…';
+---
+
+<article class="card" data-title={title.toLowerCase()} data-tags={tags.join(' ').toLowerCase()}>
+  <h2 class="card__title"><a href={`/${post.id}/`}>{title}</a></h2>
+  <p class="muted card__date"><FormattedDate date={pubDate} /></p>
+  <p class="card__excerpt">{excerpt}</p>
+  <div class="card__meta">
+    <a href={`/${post.id}/`} class="card__read">Read &rarr;</a>
+    {
+      tags.length > 0 && (
+        <span class="card__tags">
+          {tags.map((t) => (
+            <a href={`/?tag=${encodeURIComponent(t)}`} class="tag">#{t}</a>
+          ))}
+        </span>
+      )
+    }
+  </div>
+</article>
+
+<style>
+  .card {
+    padding: 1.2rem 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .card:last-child { border-bottom: none; }
+  .card__title { margin: 0 0 0.2rem; font-size: 1.3rem; }
+  .card__title a { color: var(--text); }
+  .card__title a:hover { color: var(--accent); text-decoration: none; }
+  .card__date { margin: 0 0 0.5rem; font-size: 0.85rem; }
+  .card__excerpt { margin: 0 0 0.7rem; color: var(--text-soft); }
+  .card__meta { display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap; }
+  .card__read { font-weight: 600; }
+  .card__tags { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+  .tag { color: var(--text-soft); font-size: 0.85rem; }
+  .tag:hover { color: var(--accent); text-decoration: none; }
+</style>

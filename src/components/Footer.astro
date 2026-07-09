@@ -1,0 +1,23 @@
+---
+const year = new Date().getFullYear();
+---
+
+<footer class="site-footer">
+  <div class="container site-footer__inner">
+    <p class="muted">
+      &copy; {year} &middot; Built with
+      <a href="https://astro.build">Astro</a> &middot;
+      <a href="/rss.xml">RSS</a>
+    </p>
+  </div>
+</footer>
+
+<style>
+  .site-footer {
+    border-top: 1px solid var(--border);
+    margin-top: 4rem;
+    padding: 1.5rem 0;
+  }
+  .site-footer__inner { text-align: center; }
+  .site-footer p { margin: 0; font-size: 0.9rem; }
+</style>

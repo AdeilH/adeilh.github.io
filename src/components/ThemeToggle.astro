@@ -1,0 +1,36 @@
+---
+// Light/dark theme switch. State is stored in localStorage and applied by an
+// inline script in BaseLayout before first paint.
+---
+
+<button id="theme-toggle" class="btn theme-toggle" aria-label="Toggle dark mode" title="Toggle theme">
+  <span class="theme-toggle__icon" aria-hidden="true"></span>
+</button>
+
+<script>
+  const btn = document.getElementById('theme-toggle') as HTMLButtonElement | null;
+  const icon = btn?.querySelector('.theme-toggle__icon') as HTMLElement | null;
+
+  function sync() {
+    const t = document.documentElement.getAttribute('data-theme');
+    if (icon) icon.textContent = t === 'dark' ? '☀' : '☾';
+    btn?.setAttribute('aria-label', t === 'dark' ? 'Switch to light mode' : 'Switch to dark mode');
+  }
+
+  btn?.addEventListener('click', () => {
+    const current = document.documentElement.getAttribute('data-theme');
+    const next = current === 'dark' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', next);
+    try {
+      localStorage.setItem('theme', next);
+    } catch (e) {}
+    sync();
+  });
+
+  sync();
+</script>
+
+<style>
+  .theme-toggle { padding: 0.35em 0.5em; font-size: 1rem; line-height: 1; }
+  .theme-toggle__icon { font-size: 1rem; }
+</style>
