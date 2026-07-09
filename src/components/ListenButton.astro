@@ -28,6 +28,10 @@ const { target, label = 'Listen' } = Astro.props;
   // Only one utterance at a time across the whole page.
   let activeRoot: Root | null = null;
 
+  // Firefox's Web Speech API is unreliable (often has no voices), so we hide
+  // the Listen UI there instead of showing a broken control.
+  const isFirefox = /firefox/i.test(navigator.userAgent);
+
   // --- Voice selection ---------------------------------------------------
   const synth = window.speechSynthesis;
   let voices: SpeechSynthesisVoice[] = [];
@@ -111,6 +115,11 @@ const { target, label = 'Listen' } = Astro.props;
   }
 
   function setup(root: Root) {
+    if (isFirefox) {
+      root.style.display = 'none';
+      return;
+    }
+
     const play = root.querySelector<HTMLButtonElement>('[data-listen]');
     const pause = root.querySelector<HTMLButtonElement>('[data-pause]');
     const stop = root.querySelector<HTMLButtonElement>('[data-stop]');
