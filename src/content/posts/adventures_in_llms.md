@@ -1,5 +1,5 @@
 ---
-title: "Adventures in LLM intenrals"
+title: "Adventures in LLM internals"
 description: "Learning about maths and logic behind llms"
 pubDate: 2026-07-20
 tags: [llms, mathematics, llmops, reliable_ml_systems]
