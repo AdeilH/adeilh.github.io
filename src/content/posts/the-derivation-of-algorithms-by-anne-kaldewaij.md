@@ -40,3 +40,26 @@ disjunction P ⨈ Q = false
 conjunction P ⨇ Q = false
 
 We can construct a truth table too to show equivalence
+
+## Chapter 2 Guard Programming Language
+
+The important part i feel is that every statement has inference
+or prove attached to it
+
+First relation is to follow this example to work like false remains false
+unless a miracle
+
+### Example
+
+{P}S{False} is equivalent to {P≡False}
+
+Pre conditions may be strengthened post-condition maybe weakened.
+
+If {P}S{Q} hold and {P}S{R} hold then {P}S{Q^R} holds
+
+If {P}S{Q} and {R}S{Q} then {P⨈R}S{Q}
+
+### SKIP statement
+
+It's execution has no impact on the program state for example {P}SKIP{Q} is equivalent
+to P ⟹ Q
