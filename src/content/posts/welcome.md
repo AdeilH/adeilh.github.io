@@ -17,7 +17,7 @@ used much but it is helpful in learning about parallel programming
 and gpu programming. In case you only have Intel integrated gpus
 this can be a good alternative.
 
-## How I installed it?
+### How I installed it?
 
 - There are a couple of ways to install and run sycl one is adaptivecpp
 which I haven't used the other is [Intel One Api Toolkit](https://www.intel.com/content/www/us/en/developer/tools/oneapi/oneapi-toolkit-download.html)
@@ -54,7 +54,7 @@ target_link_options(my_program PRIVATE -fsycl -Wno-reserved-module-identifier)
 #target_sources(my_program PUBLIC FILE_SET all_my_modules TYPE CXX_MODULES FILES)
 ```
 
-## A note on code
+### A note on code
 
 Just to test my setup i have this code to find number of cores in gpu and
 cpu, it uses c++20 onwards.
@@ -72,7 +72,53 @@ int main() {
 }
 ```
 
-## Helpful Links
+### Helpful Links
 
 - [Sycl Academy](https://sycl.tech/getting-started/academy/1-what-is-sycl/lesson)
 - [Sycl Workshops](https://enccs.github.io/sycl-workshop/what-is-sycl/)
+
+## Part Two
+
+date: 2026-07-29
+
+In part two I am reading data parallel C++ initially lets talk about an
+issue with parallel programming namely race condition.
+
+### Race Condition
+
+So when two different threads access and try to modify same data there is
+a possible race condition which can be thought of as lack of consistency
+in output.
+
+#### Example
+
+Lets assume we have shared memory C = 1 thread A adds 1 and thread b adds 2
+without proper synchronization it's a possibility that the either add goes
+through on different runs and not both of them as expected.
+
+#### Tools
+
+Intel Inspector available with oneapi toolkit might be discussed later or interesting
+thing to look at.
+
+### C++ Lambdas
+
+Anonymous functions defined in between the flow rather than proper syntax for functions
+or methods.
+
+```cpp
+
+[capture_list](parameters)->return type{statements};
+
+```
+
+capture_list being the variables in surrounding environment of lambda and how them
+are provided = is for copy & is for reference and you can also go for individual
+variables. sycl captures it almost always with = by value.
+parameters just work like normal parameters
+statements is where the real juice is and all logic.
+
+### Concurrency VS Parallelism
+
+Concurrency ➡ multiple processes doing things separately by switching context etc.
+Parallelism ➡ multiple processes/threads progressing at the same time altogether.
