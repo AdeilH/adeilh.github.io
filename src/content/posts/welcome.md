@@ -122,3 +122,106 @@ statements is where the real juice is and all logic.
 
 Concurrency ➡ multiple processes doing things separately by switching context etc.
 Parallelism ➡ multiple processes/threads progressing at the same time altogether.
+
+## Part Three
+
+Methods of running code.
+
+1. Run code anywhere device is chosen by runtime.
+2. Debugging code by running on host device.
+3. Dispatch code to gpu or another accelerator.
+4. Dispatch to heterogenous devices.
+5. Selecting specific device from a list.
+
+Method two is most commonly used for debugging and after that step method 3-5 follow.
+
+### Method 1 Binding to any device
+
+#### Queue
+
+Abstraction on which methods are submitted to run on a specific device runtime checks
+for prereqs like input data and then task on queue is run.
+
+- Can only be bound to one device
+- Chosen at construction of queue
+- multiple queues can bind to one device
+
+```cpp
+
+static void binding_to_any_device() {
+        sycl::queue q;
+        std::print("Selected Device: {}", q.get_device().get_info<sycl::info::device::name>());
+    }
+
+```
+
+### Method 2 Binding to Host Device
+
+- For debugging
+- Will surely run
+- Performance not a consideration
+
+```cpp
+
+    static void bind_to_cpu_device() {
+        const sycl::queue q{sycl::cpu_selector_v};
+
+        std::println("Selected Device: {}", q.get_device().get_info<sycl::info::device::name>());
+        std::println("Device Vendor: {}", q.get_device().get_info<sycl::info::device::vendor>());
+    }
+
+```
+
+### Method 3 Using a GPU or other accelerator
+
+- use gpu_selector_v
+- If gpu selector is used and no gpu is present runtime error
+- use gpu_selector_v for this
+
+### Method 4 bind multiple devices
+
+- bind both gpu and fpga
+- replace code with fpga when available
+
+```cpp
+
+    static void using_multiple_devices() {
+        // cpu device
+
+        const sycl::queue cpu_queue{sycl::cpu_selector_v};
+
+        // gpu device
+        const sycl::queue gpu_queue{sycl::gpu_selector_v};
+
+        std::println("Selected Device: {}", cpu_queue.get_device().get_info<sycl::info::device::name>());
+
+        std::println("Selected Device: {}", gpu_queue.get_device().get_info<sycl::info::device::name>());
+    }
+
+```
+
+#### Custom selector
+
+- Inherit from device_selector base class
+- overload operator ()
+- deprecated now
+- Provides different device selectors
+
+- Code with callables
+
+```cpp
+
+    static void custom_device_selector() {
+        const auto selector = [](const sycl::device &dev) -> int {
+            if (dev.is_gpu() && dev.get_info<sycl::info::device::vendor>().contains("Intel"))
+                return 100;
+            if (dev.is_gpu())
+                return 50;
+            return -1;
+        };
+
+        const sycl::queue q{selector};
+        std::println("Selected Device: {}", q.get_device().get_info<sycl::info::device::name>());
+    }
+
+```
