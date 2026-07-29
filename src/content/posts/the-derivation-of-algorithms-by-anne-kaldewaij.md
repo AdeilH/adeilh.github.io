@@ -1,7 +1,7 @@
 ---
 title: "The Derivation of Algorithms by Anne Kaldewaij"
 description: "The Derivation of Algorithms by Anne Kaldewaij"
-pubDate: 2026-07-27
+pubDate: 2026-07-29
 tags: [mynotes, programming]
 draft: false
 audio: true
@@ -62,4 +62,33 @@ If {P}S{Q} and {R}S{Q} then {P⨈R}S{Q}
 ### SKIP statement
 
 It's execution has no impact on the program state for example {P}SKIP{Q} is equivalent
-to P ⟹ Q
+to P ⟹  Q
+
+#### Prove
+
+```gcl
+[[var x, y: int; {x > 0 ⨇  y > 0} skip {x > 0}]]
+A ⨇ B ⟹ A
+post condition is satisfied.
+```
+
+### Assignment
+
+{P}x := E{Q} is equivalent to {P ⟹  Q*x:=E}
+
+```gcl
+# prove for b 󰦎 0
+1. (a mod b) mod b = a mod b
+a mod b = a - b . [a/b]
+
+### Congruence Approach
+≣ congruent modulo 
+
+x ≣ y mod b in modular arithmetic when if x - y is perfectly divisible by b
+a ≣ (a mod b) (mod b)
+r = a mod b
+a ≣ r mod b
+a mod b = r mod b 
+
+a mod b = (a mod b) (mod b)
+```
