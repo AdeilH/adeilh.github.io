@@ -123,7 +123,7 @@ statements is where the real juice is and all logic.
 Concurrency ➡ multiple processes doing things separately by switching context etc.
 Parallelism ➡ multiple processes/threads progressing at the same time altogether.
 
-## Part Three
+## Part Three Date: 29/07/2026
 
 Methods of running code.
 
@@ -200,7 +200,7 @@ static void binding_to_any_device() {
 
 ```
 
-#### Custom selector
+### Method 5 Custom selector
 
 - Inherit from device_selector base class
 - overload operator ()
@@ -225,3 +225,25 @@ static void binding_to_any_device() {
     }
 
 ```
+
+### Creating Work on Device
+
+- We submit device code for execution
+Examples:
+
+1. Task Graphs
+    Defines actions to perform on one or more devices and also dependencies of
+tasks on each other
+
+- Device code is located inside the lambda inside parallel for or any other handler
+method similarly queue can be used to dispatch to device too.
+
+- Command group is submitted to the queue or anything it should only have one operation
+kernel launch or explicit memory operation.
+
+- The code will run async when DAG node dependencies have been met.
+
+### Fallback
+
+- Fallback queue is provided not recommended use errors and catching errors for more
+control.
