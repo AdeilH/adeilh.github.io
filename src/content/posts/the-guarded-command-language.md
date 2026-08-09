@@ -53,3 +53,41 @@ a div b = q⨇ a mod b = r ≡ a = b * q + r > 0󰥽 r󰥽|b|
 ```
 
 Similar examples in text.
+
+Date: 2026-08-09
+
+## Catenation
+
+Describes sequence of actions first S is executed then T
+{P}S then T{Q} we need to find a predicate R such that P{S}R R{T}Q hold.
+
+{P}S;T{Q} ; isn't the terminator you think it is it separates two statements
+like in C++
+
+```text
+
+var a, b: bool;
+{(a≡A) ^ (b≡B)},
+a := a ≡ b
+;b := a ≡ b
+;a := a ≡ b
+{(a≡B) ^ (b≡A)}
+
+```
+
+associative we choose the weakest predicate start by last statement and go
+backwards.
+
+## Selection
+
+Form
+
+if b0 -> s0 ... bn -> sn fi
+
+basically boolean all guards evaluated none true everything terminates
+in case of false it's non deterministic as it follows the path of true(truth)
+
+even though the execution is nondeterministic, the result is deterministic.
+
+"Don't invent a program and then prove it. Derive the program from what you want
+it to accomplish."
