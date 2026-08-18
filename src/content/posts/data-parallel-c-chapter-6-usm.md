@@ -66,81 +66,59 @@ allocators on device)
 
 ## Example
 
-FNV-1a Parallel Checksum simple implementation the expected output is 0xe88ed619
+Basic Matrix Multiplication example using USM
 
 ```cpp
 
-#include <cstdint>
 #include <iostream>
-#include <ranges>
-#include <sycl/sycl.hpp>
 #include <vector>
-
-// FNV-1a (Fowler–Noll–Vo) hash implementation
-
-namespace FNV {
-
-constexpr std::uint32_t INITIALIZATION_VECTOR = 0x811c9dc5u;
-constexpr std::uint32_t PRIME_MULTIPLIER = 0x01000193u;
-
-constexpr std::size_t NUM_CHUNKS = 64;
-constexpr std::size_t CHUNK_SIZE = 1024;
-
-static constexpr std::uint32_t fnv1a_step(const std::uint32_t &hash,
-                                          const std::uint8_t &byte) {
-  return (hash ^ byte) * PRIME_MULTIPLIER;
-}
-}
+#include <sycl/sycl.hpp>
 
 int main() {
-  sycl::queue q;
+    sycl::queue q;
+    std::cout << "Device: " << q.get_device().get_info<sycl::info::device::name>() << "\n";
 
-  const std::size_t n = FNV::NUM_CHUNKS * FNV::CHUNK_SIZE;
-  std::vector<std::uint8_t> data(n);
+    // 1. Define dimensions for a square matrix (N x N)
+    constexpr size_t N = 16;
+    size_t matrix_size = N * N;
 
-  for (std::size_t i = 0; i < n; ++i) {
-    data[i] = static_cast<std::uint8_t>(
-        (i * 2654435761u) >> 24);
-  }
+    // 2. Allocate USM shared memory (accessible by host CPU and device GPU)
+    float* A = sycl::malloc_shared<float>(matrix_size, q);
+    float* B = sycl::malloc_shared<float>(matrix_size, q);
+    float* C = sycl::malloc_shared<float>(matrix_size, q);
 
+    // 3. Initialize matrices on the host using the USM pointers directly
+    for (size_t i = 0; i < N; ++i) {
+        for (size_t j = 0; j < N; ++j) {
+            A[i * N + j] = 1.0f; // Fill Matrix A with 1s
+            B[i * N + j] = 2.0f; // Fill Matrix B with 2s
+            C[i * N + j] = 0.0f; // Clear output matrix
+        }
+    }
 
-  auto* dev_data = sycl::malloc_shared<std::uint8_t>(n, q);
-  auto* dev_partial =
-      sycl::malloc_shared<std::uint32_t>(FNV::NUM_CHUNKS, q);
+    // 4. Launch a 2D parallel kernel
+    q.parallel_for(sycl::range<2>(N, N), [=](sycl::id<2> item) {
+        size_t row = item[0];
+        size_t col = item[1];
+        
+        float sum = 0.0f;
+        for (size_t k = 0; k < N; ++k) {
+            sum += A[row * N + k] * B[k * N + col];
+        }
+        
+        C[row * N + col] = sum;
+    }).wait(); // Block host execution until the GPU completes the work
 
-  q.memcpy(dev_data, data.data(),
-           n * sizeof(std::uint8_t))
-      .wait();
+    // 5. Verify the result (Every element should be 1.0 * 2.0 * N = 32.0f)
+    std::cout << "Result C[0][0]: " << C[0] << " (Expected: " << (1.0f * 2.0f * N) << ")\n";
 
-  q.parallel_for(FNV::NUM_CHUNKS, [=](sycl::id<1> c) {
-     std::uint32_t hash = FNV::INITIALIZATION_VECTOR;
-     const std::size_t base = c * FNV::CHUNK_SIZE;
-     for (std::size_t i = 0; i < FNV::CHUNK_SIZE; ++i) {
-       hash = FNV::fnv1a_step(hash, dev_data[base + i]);
-     }
-     dev_partial[c] = hash;
-   }).wait();
+    // 6. Free allocated USM storage
+    sycl::free(A, q);
+    sycl::free(B, q);
+    sycl::free(C, q);
 
-  std::uint32_t total = FNV::INITIALIZATION_VECTOR;
-  for (std::uint32_t p : std::views::counted(
-           dev_partial,
-           static_cast<std::ptrdiff_t>(FNV::NUM_CHUNKS))) {
-    total = FNV::fnv1a_step(total,
-                       static_cast<std::uint8_t>(p & 0xff));
-    total = FNV::fnv1a_step(
-        total, static_cast<std::uint8_t>((p >> 8) & 0xff));
-    total = FNV::fnv1a_step(
-        total, static_cast<std::uint8_t>((p >> 16) & 0xff));
-    total = FNV::fnv1a_step(
-        total, static_cast<std::uint8_t>((p >> 24) & 0xff));
-  }
-
-  std::cout << "FNV-1a checksum: 0x" << std::hex << total
-            << std::dec << std::endl;
-
-  sycl::free(dev_data, q);
-  sycl::free(dev_partial, q);
-  return 0;
+    return 0;
 }
+
 
 ```
