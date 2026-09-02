@@ -76,8 +76,42 @@ Related to scan.
 condition or real time/online condition. Output depends on other output
 as it is important to know which outputs were selected before that output.
 
-### Unpack
+#### Unpack
 
 1. Unpack data opposite of packing used to fill in data where it doesn't
 exist. Contiguous input elements are unpacked input into noncontiguouos
 elements.
+
+## Built In Functions And Libraries
+
+1. SYCL Reduction Library
+
+If reduction is initialized using buffers or usm it is scaler, in case of
+span it is array
+
+### The reducer class
+
+```cpp
+
+template<typename T, typename BinaryOperation, /*impl defined*/>
+class reducer{
+  void combine(const T& partial);
+};
+
+template<typename T>
+auto& operator+=(reducer<T, plus::<T>>&, const T&);
+
+```
+
+combine is implementation defined used to combine data from different work-groups
+user defined reductions are only there with trivially copyable types and combination
+Functions with no side effects.
+
+## Group Algorithms library
+
+Provides support for parallel patterns.
+
+Naming depends on if an algorithm operates on data where all work-groups know what the
+data is and can see all data has joint prefix these algorithms are similar to stl.
+If work groups can only look at a span and input and output is work-groups' local
+memory then it is modified to include "group"
