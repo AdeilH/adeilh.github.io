@@ -44,3 +44,4 @@ from an agent.
 1. Guardrails -> What to protect how to protect.
 2. observability -> Observe what's happening in decision making.
 3. Logging -> Adds auditibility makes thing deterministic.
+4. Inventory -> List of available agents.
