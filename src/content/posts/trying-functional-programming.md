@@ -121,10 +121,53 @@ Absent type that may or may not be present
 
 ## Lists
 
+Folds used to accumulate
+
 ```fsharp
 
 let fills = [(10000, 5), (100, 3), (10, 1)]
 
 let lastFillPx = fills |> List.rev |> List.head |> fst
+
+vwap: Volume Weighted Average Price
+
+// partial application and currying 
+
+let vwap (fills : (int * int) list) = 
+    if List.isEmpty fills then 0
+    else
+        let (tv, tq) = List.fold(fun (v,q )(px, n)-> (v + px *n, q + n)) (0,0) fills
+        tv/tq
+
+let a  = [(100, 2); (111, 3)]
+
+let calcVWap = vwap [(100, 2); (100, 1)]
+
+printfn "%d" calcVWap
+
+let takerFee venue = 
+    match venue with
+    | "main" -> 2
+    | "datk" -> 1
+    | _ -> 5
+
+let settle venue notional = notional * takerFee venue / 100000
+
+let feeOnMain = settle "main" 100000
+
+printfn "%d" feeOnMain
+
+
+```
+
+Maps and Pipes
+
+```fsharp
+
+let grossOfBookSide (levels : (int * int) list) = 
+    levels |> List.map (fun (p, q) -> p * q) |> List.sum
+
+let deepest (levels : (int * int) list) = 
+    levels |> List.fold (fun acc (_, q) -> max acc q) 0
 
 ```
