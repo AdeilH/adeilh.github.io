@@ -52,3 +52,21 @@ Q/K/V Query -> What am I looking for, Key -> What do I contain, Value -> what do
 I pass along. K and V don't change so we can cache them and use them rather than
 generating by using all the previous tokens. This is a topic on it's own which I
 will go into details separately.
+
+A layer will take the vectors and output another set of vectors. Now moving towards
+attention and feed forward network attention represents how each token is worth in
+relation to other tokens, feed forward each position on its own.
+
+Most basic type of attention is causal for left to right text generation it takes
+tokens so far for softmax and avoids future tokens as they will cause an impact in
+softmax when later positions are removed sum would become less than 1.
+
+Feed Forward Network looks at only the token and passes it through expand -> bend
+-> squeeze to get ffn where formula is W2σ(W1x + b1)+b2 W1x + b1 is expand for example
+which projects it onto a larger space non linearility it provides ffn with curved
+without it ffn will collapse into a line. After that it is squeezed back into original
+dimensions.
+
+The model is trained on a corpus of text if it responds with the same answer how
+do we know if it just memorized or was it trained we use classic ml thing of training
+and test data, if model's training loss is low and test data loss is high it overfit.
