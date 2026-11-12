@@ -1,6 +1,6 @@
 ---
-title: "AI Inference Part 1"
-description: "Infrastructure and Maths Behind AI"
+title: "AI Inference"
+description: "Infrastructure and Maths Behind AI Basics"
 pubDate: 2026-10-19
 tags: []
 draft: false
