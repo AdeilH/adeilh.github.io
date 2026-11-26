@@ -9,11 +9,11 @@ audio: true
 
 Inference is the second part of the process in Generative AI after training.
 In traditional machine learning models it is basically straight forward and different
-than generative AI which this book talks about. This involves infrastructure, runtime
-and tooling. There are many methods implemented to improve inference. Batching (requests
-in parallel), Caching (caching kv), Quantization (reducing model precision) Disaggregation
-(separating prefill(startup) and decode(token generation)), Speculation (a small model
-generating tokens as suggestions to enhance response time) and Parallelism.
+than generative AI which this book talks about. This involves **infrastructure**, **runtime**
+and **tooling**. There are many methods implemented to improve inference. **Batching** (requests
+in parallel), Caching (caching kv), **Quantization** (reducing model precision) **Disaggregation**
+(separating prefill(startup) and decode(token generation)), **Speculation** (a small model
+generating tokens as suggestions to enhance response time) and **Parallelism**.
 
 Issues pop up when running clusters like co-ordination between them overusage of one cluster
 underusage of another it's important to take care of that in infrastructure.
@@ -31,9 +31,9 @@ Fine tuning a model to a domains needs. Fine tuning is basically using new data 
 more useful for specific cases. After that it talks about distillation. Which is the process
 of teaching a smaller model via probabilty distibution of responses of a bigger model. 
 
-Then it talks about metrics like TTFT and TPS (Time to first token) and (Tokens per second)
+Then it talks about metrics like **TTFT** and **TPS** (Time to first token) and (Tokens per second)
 Perceived TPS -> Observed by user, Total TPS -> Total number of tokens generated per second
-ITL -> Intertoken Latency (time between two tokens).
+**ITL** -> Intertoken Latency (time between two tokens).
 
 All in all chapter 1 talks about whys and hows of which infrastructure, what tooling to use
 and different metrics that can help in making decisions related to generative ai deployment.
