@@ -1,7 +1,7 @@
 ---
 title: "Inference Engineering: Review Chapter 2"
 description: "Inference Engineering: Review Chapter 2"
-pubDate: 2026-11-25
+pubDate: 2026-11-27
 tags: []
 draft: false
 audio: true
