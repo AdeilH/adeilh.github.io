@@ -34,5 +34,7 @@ All in all quite an interesting chapter.
 Key takeaways for hardware selection (the chapter's practical spine):
 
 Compute-bound workloads (prefill, image/video generation) → maximize dense FLOPS.
+
 Decode-bound workloads (LLM token generation) → maximize memory bandwidth, and size VRAM as weights + ≥50% KV-cache headroom.
+
 Match the interconnect topology (NVLink/NVSwitch/InfiniBand, or MIG for small models) to your model size and traffic.
